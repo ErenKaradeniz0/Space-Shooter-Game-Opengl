@@ -1,6 +1,7 @@
 #include <GL/gl.h>
 #include <GL/glut.h>
 #include <math.h>
+#include <stdio.h>
 
 #define BORDER_SIZE 10
 #define MAX_X 1024
@@ -8,7 +9,7 @@
 #define SIDE_BAR_WIDTH 192 // 24 * 8
 
 #define ROCKET_WIDTH 32 // 6 * 8
-#define ROCKET_HEIGHT 80
+#define ROCKET_HEIGHT 65
 
 #define SPACE_SHIP_WIDTH 80  // 6 * 8
 #define SPACE_SHIP_HEIGHT 64 // 8 * 8
@@ -43,6 +44,7 @@ Rocket rockets[MAX_ROCKETS];
 int rocketMoveCounter = 0; // Counter to control rocket movement speed
 int bulletMoveCounter = 0; // Counter to control bullet movement speed
 
+int flag = 0; // flag 1 when key pressed
 int quit_flag = 0;
 int pause_flag = 0;
 char current_key = '1';
@@ -61,14 +63,26 @@ void clear_screen()
     glFlush(); // Flush OpenGL pipeline to display the result
 }
 
-void SDL_Clear_Rect(int x, int y, int x1, int x2)
+// void glClearRect(int x, int y, int x1, int x2)
+// {
+//     // SDL_SetRenderDrawColor( 0, 0, 0, 255); // Black color
+//     // SDL_Rect clearRect = {x, y, x1, x2};
+//     // SDL_RenderFillRect();
+// }
+
+void glClearRect(int x, int y, int width, int height)
 {
-    // SDL_SetRenderDrawColor( 0, 0, 0, 255); // Black color
-    // SDL_Rect clearRect = {x, y, x1, x2};
-    // SDL_RenderFillRect();
+    glScissor(x, y, width, height); // Enable scissor test to restrict clearing to the specified rectangle
+    glEnable(GL_SCISSOR_TEST);
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set the clear color (black in this case)
+    glClear(GL_COLOR_BUFFER_BIT);         // Clear the color buffer
+
+    glDisable(GL_SCISSOR_TEST); // Disable scissor test after clearing
 }
 
-void drawBoundaries() {
+void drawBoundaries()
+{
     // Draw top border
     glColor3f(1.0f, 1.0f, 1.0f); // Set color to white
     glBegin(GL_QUADS);
@@ -112,7 +126,6 @@ void drawBoundaries() {
 
     glFlush();
 }
-
 
 // Function to convert an integer to its string representation
 int int_to_string(int num, char *buffer)
@@ -185,9 +198,19 @@ int int_to_string(int num, char *buffer)
 //     SDL_FreeSurface(surface);
 // }
 
+void graphics_write_string(float x, float y, const char *string)
+{
+    glRasterPos2f(x, y); // Set the position for the text
+    for (const char *c = string; *c != '\0'; ++c)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c); // Render each character
+    }
+    glFlush();
+}
+
 void printScore(int x, int y)
 {
-    // SDL_Clear_Rect( x, y, 18, 16);
+    // glClearRect( x, y, 18, 16);
     // SDL_SetRenderDrawColor( 255, 255, 255, 255); // White color
     int num_digits = int_to_string(score, score_str);
     graphics_write_string(x, y, score_str);
@@ -208,7 +231,7 @@ void bullet_counter()
 void printBulletCount(int x, int y)
 {
 
-    // SDL_Clear_Rect( x, y, 18, 16);
+    // glClearRect( x, y, 18, 16);
     // SDL_SetRenderDrawColor( 255, 255, 255, 255); // White color
     int num_digits = int_to_string(bullet_count, bullets_str);
     graphics_write_string(x, y, bullets_str);
@@ -219,40 +242,31 @@ void printBulletCount(int x, int y)
 void info()
 {
     // SDL_SetRenderDrawColor( 255, 255, 255, 255); // Set color to draw (white)
-    graphics_write_string(16, 15, "Welcome!");
-    graphics_write_string(16, 30, "Save the World!");
-    graphics_write_string(16, 45, "by Eren Karadeniz");
-    graphics_write_string(16, 60, "200101070");
+    graphics_write_string(16, 740, "Welcome!");
+    graphics_write_string(16, 725, "Save the World!");
+    graphics_write_string(16, 710, "by Eren Karadeniz");
+    graphics_write_string(16, 695, "200101070");
 
-    graphics_write_string(16, 85, "Keys");
-    graphics_write_string(16, 100, "A to move left");
-    graphics_write_string(16, 115, "D to move right");
-    graphics_write_string(16, 130, "Space to Shot");
-    graphics_write_string(16, 145, "Q to quit game");
-    graphics_write_string(16, 160, "R to restart game");
-    graphics_write_string(16, 175, "P to pause game");
-    graphics_write_string(16, 190, "Win after reach");
-    graphics_write_string(16, 205, "25 Score");
-}
-
-void graphics_write_string(float x, float y, const char *string)
-{
-    glRasterPos2f(x, y); // Set the position for the text
-    for (const char *c = string; *c != '\0'; ++c)
-    {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c); // Render each character
-    }
+    graphics_write_string(16, 670, "Keys");
+    graphics_write_string(16, 655, "A to move left");
+    graphics_write_string(16, 640, "D to move right");
+    graphics_write_string(16, 625, "Space to Shot");
+    graphics_write_string(16, 610, "Q to quit game");
+    graphics_write_string(16, 595, "R to restart game");
+    graphics_write_string(16, 580, "P to pause game");
+    graphics_write_string(16, 565, "Win after reach");
+    graphics_write_string(16, 550, "25 Score");
 }
 
 void intro()
 {
     drawBoundaries();
     info();
-    graphics_write_string(16, 250, "Bullets:");
-    // printBulletCount( 88, 250);
+    graphics_write_string(16, 530, "Bullets:");
+    // printBulletCount( 88, 530);
 
-    graphics_write_string(16, 265, "Score:");
-    // printScore( 80, 265);
+    graphics_write_string(16, 515, "Score:");
+    // printScore( 80, 515);
 }
 
 // Draw A
@@ -260,11 +274,11 @@ void draw_a(int x, int y, int w, int h)
 {
     glBegin(GL_LINES);
     // Draw the two diagonal lines of the 'A'
-    glVertex2i(x, y);
-    glVertex2i(x + w + 3, y + h + 3);
+    glVertex2i(x + w + 3, y + 22);
+    glVertex2i(x, y + h + 25);
 
-    glVertex2i(x, y);
-    glVertex2i(x - w - 3, y + h + 3);
+    glVertex2i(x - w - 3, y + 22);
+    glVertex2i(x, y + h + 25);
 
     // Draw the horizontal bar of the 'A'
     glVertex2i(x - 10, y + 10);
@@ -279,20 +293,9 @@ void draw_a(int x, int y, int w, int h)
     glEnd();
 }
 
-// void drawCircle( int centerX, int centerY, int radius)
-// {
-//     SDL_SetRenderDrawColor( 255, 255, 255, 255); // Set color to white
-//     for (int x = -radius; x <= radius; x++)
-//     {
-//         int y = (int)sqrt(radius * radius - x * x);              // Calculate y-coordinate based on the equation of a circle
-//         SDL_RenderDrawPoint( centerX + x, centerY + y); // Draw top half of circle
-//         SDL_RenderDrawPoint( centerX + x, centerY - y); // Draw bottom half of circle
-//     }
-// }
-
 void drawCircle(int x, int y, int r)
 {
-    glBegin(GL_TRIANGLE_FAN);
+    glBegin(GL_LINE_LOOP); // Use GL_LINE_LOOP instead of GL_TRIANGLE_FAN
     for (int i = 0; i < 360; ++i)
     {
         float rad = i * 3.14159 / 180;
@@ -305,77 +308,75 @@ void drawSpaceship(int x, int y, int w, int h)
 {
     glColor3f(1.0f, 1.0f, 1.0f); // Set color to white
 
-    // Draw 'A' four times
-    draw_a(x, y, w, h);
-    draw_a(x + 70, y, w, h);
-    draw_a(x, y + 20, w, h);
-    draw_a(x + 70, y + 20, w, h);
+    // // Draw 'A' four times
+    draw_a(x, y + 5, w, h);
+    draw_a(x + 70, y + 5, w, h);
+    draw_a(x, y + 25, w, h);
+    draw_a(x + 70, y + 25, w, h);
+
+    // Draw '-'
+    glBegin(GL_LINES);
+    glVertex2i(x + 30, y + 50);
+    glVertex2i(x + 39, y + 50);
+    glEnd();
 
     // Draw 'I'
     glBegin(GL_LINES);
-    glVertex2i(x + 35, y);
-    glVertex2i(x + 35, y + h + 6);
+    glVertex2i(x + 35, y + 40);
+    glVertex2i(x + 35, y + 50);
     glEnd();
 
     // Draw '-'
     glBegin(GL_LINES);
-    glVertex2i(x + 35 - w + 1, y);
-    glVertex2i(x + 35 + w - 1, y);
-
-    glVertex2i(x + 35 - w + 1, y + h + 6);
-    glVertex2i(x + 35 + w - 1, y + h + 6);
+    glVertex2i(x + 30, y + 40);
+    glVertex2i(x + 39, y + 40);
     glEnd();
 
-    // Draw '/'
+    // // Draw '/'
     glBegin(GL_LINES);
-    glVertex2i(x + 30, y + 20);
-    glVertex2i(x + 30 - w - 3, y + 20 + h + 3);
+    glVertex2i(x + 30, y + 35);
+    glVertex2i(x + 24, y + 25);
     glEnd();
 
-    // Draw '\'
+    // // Draw '\'
     glBegin(GL_LINES);
-    glVertex2i(x + 40, y + 20);
-    glVertex2i(x + 40 + w + 3, y + 20 + h + 3);
+    glVertex2i(x + 40, y + 35);
+    glVertex2i(x + 46, y + 25);
     glEnd();
 
     // Draw '-'
     glBegin(GL_LINES);
-    glVertex2i(x + 30, y + 22);
-    glVertex2i(x + 30 + w + 6, y + 22);
+    glVertex2i(x + 30, y + 30);
+    glVertex2i(x + 40, y + 30);
     glEnd();
 
     // Draw '/'
     glBegin(GL_LINES);
-    glVertex2i(x + 10, y + 45);
-    glVertex2i(x + 10 - w, y + 45 + h);
+    glVertex2i(x + 10, y + 10);
+    glVertex2i(x, y);
     glEnd();
 
     // Draw circles
-    drawCircle(x + 20, y + 45 - w - 2, 5);
-    drawCircle(x + 35, y + 45 - w - 2, 5);
-    drawCircle(x + 50, y + 45 - w - 2, 5);
+    drawCircle(x + 20, y + 25 - w - 2, 5);
+    drawCircle(x + 35, y + 25 - w - 2, 5);
+    drawCircle(x + 50, y + 25 - w - 2, 5);
 
     // Draw '\'
     glBegin(GL_LINES);
-    glVertex2i(x + 60, y + 45);
-    glVertex2i(x + 60 + w, y + 45 + h);
+    glVertex2i(x + 60, y + 10);
+    glVertex2i(x + 70, y);
     glEnd();
+
+    glFlush();
 }
 
-void clearSpaceship(int x, int y, int w, int h)
+void clearSpaceship(int x, int y)
 {
     // Calculate bottom-right corner coordinates
-    int x2 = x + 92;
-    int y2 = y + 54; // Maximum y-coordinate for the spaceship
-
-    // Set the color to clear (usually you would set this to your background color)
-    // SDL_SetRenderDrawColor( 0, 0, 0, 255); // Black color
-
-    // Define the rectangle to clear
-    // SDL_Rect clearRect = {x - 10, y, x2 - x, y2 - y};
-
-    // Clear the rectangle covering the spaceship
-    // SDL_RenderFillRect( &clearRect);
+    int x2 = 92;
+    int y2 = 54; // Maximum y-coordinate for the spaceship
+    glClearRect(x-12, y, x2, y2);
+    
 }
 
 void drawCharacter(int x, int y)
@@ -386,12 +387,12 @@ void drawCharacter(int x, int y)
     // Draw the points to form the '^' character
     glBegin(GL_POINTS);
     glVertex2i(x, y);         // Top center point
-    glVertex2i(x - 1, y + 1); // Upper left point
-    glVertex2i(x - 2, y + 2); // Upper left point
-    glVertex2i(x - 3, y + 3); // Upper left point
-    glVertex2i(x + 1, y + 1); // Upper right point
-    glVertex2i(x + 2, y + 2); // Upper right point
-    glVertex2i(x + 3, y + 3); // Upper right point
+    glVertex2i(x + 1, y - 1); // Upper left point
+    glVertex2i(x + 2, y - 2); // Upper left point
+    glVertex2i(x + 3, y - 3); // Upper left point
+    glVertex2i(x - 1, y - 1); // Upper right point
+    glVertex2i(x - 2, y - 2); // Upper right point
+    glVertex2i(x - 3, y - 3); // Upper right point
     glEnd();
 }
 
@@ -401,11 +402,11 @@ void moveBullet(int index)
     {
 
         // Clear previous bullet position
-        SDL_Clear_Rect(bullets[index].x - 3, bullets[index].y, 7, 4);
-        if (bullets[index].y > 20)
+        glClearRect(bullets[index].x-4, bullets[index].y-4, 8, 5);
+        if (bullets[index].y < MAX_Y - BORDER_SIZE - 4)
         {
 
-            bullets[index].y -= BULLET_SPEED; // Move the bullet upwards
+            bullets[index].y += BULLET_SPEED; // Move the bullet upwards
             // Draw '^' character at the new position
             // SDL_SetRenderDrawColor( 255, 255, 255, 255);        // Set color to draw (white)
             drawCharacter(bullets[index].x, bullets[index].y); // Draw the bullet
@@ -442,25 +443,25 @@ void shot_bullet(Bullet *bullet)
 {
     bullet->active = 1;
     bullet->avaible = 0;
-    bullet->x = ship_x + 32; // Adjust bullet position to appear from spaceship's center
-    bullet->y = ship_y - 16;
+    bullet->x = ship_x + 35; // Adjust bullet position to appear from spaceship's center
+    bullet->y = ship_y + 60;
 }
 
 void drawRocket(int x, int y)
 {
     // Draw \||/
     glBegin(GL_LINES);
-    glVertex2f(x, y - 10 - 8);
-    glVertex2f(x + 10, y - 10);
+    glVertex2f(x + 20, y + 15);
+    glVertex2f(x + 30, y + 23);
 
-    glVertex2f(x + 10, y - 8);
-    glVertex2f(x + 10, y - 28);
+    glVertex2f(x + 10, y + 10);
+    glVertex2f(x + 10, y + 35);
 
-    glVertex2f(x + 20, y - 8);
-    glVertex2f(x + 20, y - 28);
+    glVertex2f(x + 20, y + 10);
+    glVertex2f(x + 20, y + 35);
 
-    glVertex2f(x + 20, y - 8);
-    glVertex2f(x + 30, y - 18);
+    glVertex2f(x, y + 25);
+    glVertex2f(x + 10, y + 15);
     glEnd();
 
     // Draw ___
@@ -473,37 +474,30 @@ void drawRocket(int x, int y)
     glBegin(GL_LINES);
     glVertex2f(x, y + 25);
     glVertex2f(x, y - 20);
-
     glVertex2f(x + 30, y + 25);
     glVertex2f(x + 30, y - 20);
     glEnd();
 
+    drawCircle(x + 15, y - 10, 5);
+
     // Draw '\'
     glBegin(GL_LINES);
-    glVertex2f(x, y + 15);
-    glVertex2f(x + 15, y + 30);
+    glVertex2f(x, y - 15);
+    glVertex2f(x + 15, y - 30);
     glEnd();
 
     // Draw /
     glBegin(GL_LINES);
-    glVertex2f(x + 30, y + 15);
-    glVertex2f(x + 15, y + 30);
+    glVertex2f(x + 30, y - 15);
+    glVertex2f(x + 15, y - 30);
     glEnd();
 }
 void clearRocket(int x, int y)
 {
     // Calculate bottom-right corner coordinates
-    int x2 = x + ROCKET_WIDTH;
-    int y2 = y + ROCKET_HEIGHT; // Maximum y-coordinate for the spaceship
-
-    // Set the color to clear (usually you would set this to your background color)
-    // SDL_SetRenderDrawColor( 0, 0, 0, 255); // Black color
-
-    // Define the rectangle to clear
-    // SDL_Rect clearRect = {x, y - 40, x2 - x, y2 - y};
-
-    // Clear the rectangle covering the spaceship
-    // SDL_RenderFillRect( &clearRect);
+    int x2 = ROCKET_WIDTH;
+    int y2 = ROCKET_HEIGHT; // Maximum y-coordinate for the spaceship
+    glClearRect(x - 1, y - 30, x2, y2);
 }
 
 unsigned int get_system_timer_value()
@@ -547,7 +541,7 @@ void generateRocket(Rocket *rocket)
     {
         // Generate random position for the new rocket
         newRocketX = 8 * randRocketAxis(); // Adjust range to prevent overflow
-        newRocketY = 52;                   // Adjust range as needed
+        newRocketY = MAX_Y - 52;           // Adjust range as needed
 
         // Check for collision with existing rockets based on X position only
         collisionDetected = 0;
@@ -585,7 +579,7 @@ void moveRocket(int index)
     if (rocketMoveCounter % ROCKET_MOVE_DELAY == 0)
     {                                                    // Move the rocket every ROCKET_MOVE_DELAY frames
         clearRocket(rockets[index].x, rockets[index].y); // Clear previous rocket position
-        rockets[index].y += ROCKET_SPEED;                // Move the rocket downwards
+        rockets[index].y -= ROCKET_SPEED;                // Move the rocket downwards
         drawRocket(rockets[index].x, rockets[index].y);
     }
 }
@@ -638,7 +632,7 @@ void initRockets()
         {
             // Generate random position for the new rocket
             newRocketX = 8 * randRocketAxis();
-            newRocketY = 52;
+            newRocketY = MAX_Y - 52;
 
             // Check for collision with existing rockets based on X position only
             collisionDetected = 0;
@@ -678,7 +672,7 @@ int collisionBullet()
                     printScore(80, 265);
                     bullets[i].active = 0; // Deactivate bullet
                     rockets[j].active = 0; // Deactivate rocket
-                    SDL_Clear_Rect(bullets[i].x - 3, bullets[i].y, 7, 4);
+                    glClearRect(bullets[i].x - 3, bullets[i].y, 7, 4);
                     clearRocket(rockets[j].x, rockets[j].y);
                     break;
                 }
@@ -704,7 +698,7 @@ void collisionSpaceShip()
     {
         // Check if any of the edges of the rocket box lie outside the spaceship box
 
-        if (ship_x <= rockets[i].x + ROCKET_WIDTH - 1 && ship_x + SPACE_SHIP_WIDTH - 1 >= rockets[i].x && rockets[i].y + ROCKET_HEIGHT - 40 >= ship_y)
+        if (ship_x <= rockets[i].x + ROCKET_WIDTH - 1 && ship_x + SPACE_SHIP_WIDTH - 1 >= rockets[i].x && rockets[i].y + ROCKET_HEIGHT - 40 <= ship_y)
         {
             quit_flag = 1;
             gameOver();
@@ -722,7 +716,7 @@ void init()
     intro();
 
     ship_x = (MAX_X + SIDE_BAR_WIDTH) / 2 - SPACE_SHIP_WIDTH / 4; // base x of spaceship 49th pixel
-    ship_y = MAX_Y - SPACE_SHIP_HEIGHT;                           // base y of spaceship 87th pixel
+    ship_y = 15;                                                   // base y of spaceship 87th pixel
 }
 
 void quitGame()
@@ -747,14 +741,14 @@ void handleUserInput(char current_key, Bullet bullets[MAX_BULLETS])
         case 'a':
             if (ship_x - 1 > SIDE_BAR_WIDTH + 20)
             {
-                clearSpaceship(ship_x, ship_y, 4, 4);
+                clearSpaceship(ship_x, ship_y);
                 ship_x -= 8;
             }
             break;
         case 'd':
             if (ship_x + SPACE_SHIP_WIDTH < MAX_X - 16)
             {
-                clearSpaceship(ship_x, ship_y, 4, 4);
+                clearSpaceship(ship_x, ship_y);
                 ship_x += 8;
             }
             break;
@@ -787,13 +781,15 @@ void handleUserInput(char current_key, Bullet bullets[MAX_BULLETS])
             }
             break;
         }
+        flag = 0;
     }
     else
     {
         if (current_key == 'p')
         {
+            flag = 0;
             pause_flag = 0;
-            SDL_Clear_Rect(MAX_X / 2, MAX_Y / 2, 245, 20);
+            glClearRect(MAX_X / 2, MAX_Y / 2, 245, 20);
         }
     }
 }
@@ -814,7 +810,7 @@ int continueGame()
     int rocketReachedBottom = 0;
     for (int i = 0; i < MAX_ROCKETS; i++)
     {
-        if (rockets[i].y + 45 >= MAX_Y)
+        if (rockets[i].y + ROCKET_HEIGHT <= 0)
         {
             rocketReachedBottom = 1;
             if (rocketReachedBottom)
@@ -850,29 +846,83 @@ void busy_wait(unsigned int milliseconds)
     }
 }
 
-void display() {
+void display()
+{
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color to black
-    glClear(GL_COLOR_BUFFER_BIT); // Clear the color buffer
-    drawBoundaries(); // Draw boundaries
-    //init();
+    glClear(GL_COLOR_BUFFER_BIT);         // Clear the color buffer
+
+    glColor3f(1.0f, 1.0f, 1.0f); // Set color to white
+    init();
+    drawSpaceship(ship_x, ship_y, 4, 4);
 }
 
-void reshape(int width, int height) {
+void reshape(int width, int height)
+{
     glViewport(0, 0, width, height); // Set the viewport to cover the entire window
-    glMatrixMode(GL_PROJECTION); // Select the projection matrix
-    glLoadIdentity(); // Reset the projection matrix
+    glMatrixMode(GL_PROJECTION);     // Select the projection matrix
+    glLoadIdentity();                // Reset the projection matrix
     gluOrtho2D(0, width, 0, height); // Set up an orthographic projection
-    glMatrixMode(GL_MODELVIEW); // Select the modelview matrix
-    glLoadIdentity(); // Reset the modelview matrix
+    glMatrixMode(GL_MODELVIEW);      // Select the modelview matrix
+    glLoadIdentity();                // Reset the modelview matrix
 }
 
-int main(int argc, char** argv) {
-    glutInit(&argc, argv); // Initialize GLUT
+char keyboard(unsigned char key, int x, int y)
+{
+    current_key = key;
+    flag = 1;
+}
+
+void gameLoop(int value)
+{
+    // Check if the game should continue and the quit_flag is not set
+    if (quit_flag == 0 && continueGame())
+    {
+        if (flag)
+        {
+            // Handle user input
+            handleUserInput(current_key, bullets);
+        }
+
+        // Draw the spaceship
+        drawSpaceship(ship_x, ship_y, 4, 4);
+
+        // Move bullets and rockets
+        move_bullets();
+        move_rockets();
+
+        // Check for collisions
+        collisionBullet();
+        collisionSpaceShip();
+
+        // Wait for 50 milliseconds
+        //busy_wait(800);
+    }
+
+    // Check if 'r' key is pressed to restart the game
+    if (current_key == 'r')
+    {
+        quit_flag = 0;
+        bullet_count = MAX_BULLETS;
+        restartGame(); // Restart the game
+    }
+
+    // Call the game loop function again
+    glutTimerFunc(50, gameLoop, 0);
+}
+
+int main(int argc, char **argv)
+{
+    glutInit(&argc, argv);                       // Initialize GLUT
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB); // Set up the display mode
-    glutInitWindowSize(MAX_X, MAX_Y); // Set the window size
-    glutCreateWindow("OpenGL Boundaries"); // Create a window with the given title
+    glutInitWindowSize(MAX_X, MAX_Y);            // Set the window size
+    glutCreateWindow("Save The World");          // Create a window with the given title
+    glutKeyboardFunc(keyboard);
     glutDisplayFunc(display); // Set the display function
     glutReshapeFunc(reshape); // Set the reshape function
+
+    // Start the game loop
+    glutTimerFunc(0, gameLoop, 0);
+
     glutMainLoop(); // Enter the GLUT event processing loop
     return 0;
 }
