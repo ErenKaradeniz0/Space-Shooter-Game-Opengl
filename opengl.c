@@ -663,7 +663,7 @@ int collisionBullet()
             {
                 if (rockets[j].active &&
                     bullets[i].x >= rockets[j].x - 8 && bullets[i].x < rockets[j].x + ROCKET_WIDTH &&
-                    bullets[i].y >= rockets[j].y && bullets[i].y < rockets[j].y + ROCKET_HEIGHT)
+                    bullets[i].y <= rockets[j].y && bullets[i].y > rockets[j].y - ROCKET_HEIGHT)
                 {
                     score += 1;
 
@@ -875,14 +875,13 @@ void gameLoop(int value)
     // Check if the game should continue and the quit_flag is not set
     if (quit_flag == 0 && continueGame())
     {
+        // Draw the spaceship
+        drawSpaceship(ship_x, ship_y, 4, 4);
         if (flag)
         {
             // Handle user input
             handleUserInput(current_key, bullets);
         }
-
-        // Draw the spaceship
-        drawSpaceship(ship_x, ship_y, 4, 4);
 
         // Move bullets and rockets
         move_bullets();
