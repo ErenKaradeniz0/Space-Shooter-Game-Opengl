@@ -210,8 +210,7 @@ void graphics_write_string(float x, float y, const char *string)
 
 void printScore(int x, int y)
 {
-    // glClearRect( x, y, 18, 16);
-    // SDL_SetRenderDrawColor( 255, 255, 255, 255); // White color
+    glClearRect(x - 2, y, 27, 15);
     int num_digits = int_to_string(score, score_str);
     graphics_write_string(x, y, score_str);
 }
@@ -231,7 +230,7 @@ void bullet_counter()
 void printBulletCount(int x, int y)
 {
 
-    // glClearRect( x, y, 18, 16);
+    glClearRect(x - 2, y, 27, 15);
     // SDL_SetRenderDrawColor( 255, 255, 255, 255); // White color
     int num_digits = int_to_string(bullet_count, bullets_str);
     graphics_write_string(x, y, bullets_str);
@@ -243,30 +242,30 @@ void info()
 {
     // SDL_SetRenderDrawColor( 255, 255, 255, 255); // Set color to draw (white)
     graphics_write_string(16, 740, "Welcome!");
-    graphics_write_string(16, 725, "Save the World!");
-    graphics_write_string(16, 710, "by Eren Karadeniz");
-    graphics_write_string(16, 695, "200101070");
+    graphics_write_string(16, 720, "Save the World!");
+    graphics_write_string(16, 700, "by Eren Karadeniz");
+    graphics_write_string(16, 680, "200101070");
 
-    graphics_write_string(16, 670, "Keys");
-    graphics_write_string(16, 655, "A to move left");
-    graphics_write_string(16, 640, "D to move right");
-    graphics_write_string(16, 625, "Space to Shot");
-    graphics_write_string(16, 610, "Q to quit game");
-    graphics_write_string(16, 595, "R to restart game");
-    graphics_write_string(16, 580, "P to pause game");
-    graphics_write_string(16, 565, "Win after reach");
-    graphics_write_string(16, 550, "25 Score");
+    graphics_write_string(16, 640, "Keys");
+    graphics_write_string(16, 620, "A to move left");
+    graphics_write_string(16, 600, "D to move right");
+    graphics_write_string(16, 580, "Space to Shot");
+    graphics_write_string(16, 560, "Q to quit game");
+    graphics_write_string(16, 540, "R to restart game");
+    graphics_write_string(16, 520, "P to pause game");
+    graphics_write_string(16, 500, "Win after reach");
+    graphics_write_string(16, 480, "25 Score");
 }
 
 void intro()
 {
     drawBoundaries();
     info();
-    graphics_write_string(16, 530, "Bullets:");
-    // printBulletCount( 88, 530);
+    graphics_write_string(16, 450, "Bullets:");
+    printBulletCount(88, 450);
 
-    graphics_write_string(16, 515, "Score:");
-    // printScore( 80, 515);
+    graphics_write_string(16, 430, "Score:");
+    printScore(80, 430);
 }
 
 // Draw A
@@ -375,8 +374,7 @@ void clearSpaceship(int x, int y)
     // Calculate bottom-right corner coordinates
     int x2 = 92;
     int y2 = 54; // Maximum y-coordinate for the spaceship
-    glClearRect(x-12, y, x2, y2);
-    
+    glClearRect(x - 12, y, x2, y2);
 }
 
 void drawCharacter(int x, int y)
@@ -402,7 +400,7 @@ void moveBullet(int index)
     {
 
         // Clear previous bullet position
-        glClearRect(bullets[index].x-4, bullets[index].y-4, 8, 5);
+        glClearRect(bullets[index].x - 4, bullets[index].y - 4, 8, 5);
         if (bullets[index].y < MAX_Y - BORDER_SIZE - 4)
         {
 
@@ -669,10 +667,10 @@ int collisionBullet()
                 {
                     score += 1;
 
-                    printScore(80, 265);
+                    printScore(80, 430);
                     bullets[i].active = 0; // Deactivate bullet
                     rockets[j].active = 0; // Deactivate rocket
-                    glClearRect(bullets[i].x - 3, bullets[i].y, 7, 4);
+                     glClearRect(bullets[i].x - 4, bullets[i].y - 4, 8, 5);
                     clearRocket(rockets[j].x, rockets[j].y);
                     break;
                 }
@@ -716,7 +714,7 @@ void init()
     intro();
 
     ship_x = (MAX_X + SIDE_BAR_WIDTH) / 2 - SPACE_SHIP_WIDTH / 4; // base x of spaceship 49th pixel
-    ship_y = 15;                                                   // base y of spaceship 87th pixel
+    ship_y = 15;                                                  // base y of spaceship 87th pixel
 }
 
 void quitGame()
@@ -759,13 +757,14 @@ void handleUserInput(char current_key, Bullet bullets[MAX_BULLETS])
                 {
                     shot_bullet(&bullets[i]);
                     bullet_counter();
-                    printBulletCount(88, 250);
+                    printBulletCount(88, 450);
                     break;
                 }
             }
             break;
         case 'q':
-            //
+            quitGame();
+            quit_flag = 1;
             break;
         case 'r':
             score = 0;
@@ -789,7 +788,7 @@ void handleUserInput(char current_key, Bullet bullets[MAX_BULLETS])
         {
             flag = 0;
             pause_flag = 0;
-            glClearRect(MAX_X / 2, MAX_Y / 2, 245, 20);
+            glClearRect(MAX_X / 2, MAX_Y / 2 -10, 245, 30);
         }
     }
 }
@@ -853,7 +852,6 @@ void display()
 
     glColor3f(1.0f, 1.0f, 1.0f); // Set color to white
     init();
-    drawSpaceship(ship_x, ship_y, 4, 4);
 }
 
 void reshape(int width, int height)
@@ -895,19 +893,22 @@ void gameLoop(int value)
         collisionSpaceShip();
 
         // Wait for 50 milliseconds
-        //busy_wait(800);
+        // busy_wait(800);
     }
 
     // Check if 'r' key is pressed to restart the game
-    if (current_key == 'r')
+    if (flag && !pause_flag)
     {
-        quit_flag = 0;
-        bullet_count = MAX_BULLETS;
-        restartGame(); // Restart the game
+        if (current_key == 'r')
+        {
+            quit_flag = 0;
+            bullet_count = MAX_BULLETS;
+            restartGame(); // Restart the game
+        }
     }
 
     // Call the game loop function again
-    glutTimerFunc(50, gameLoop, 0);
+    glutTimerFunc(25, gameLoop, 0);
 }
 
 int main(int argc, char **argv)
