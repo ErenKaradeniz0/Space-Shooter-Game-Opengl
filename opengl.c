@@ -3,24 +3,29 @@
 #include <math.h>
 #include <stdio.h>
 
+// Screen Constants
 #define BORDER_SIZE 10
 #define MAX_X 1024
 #define MAX_Y 768
-#define SIDE_BAR_WIDTH 192 // 24 * 8
+#define SIDE_BAR_WIDTH 192
 
-#define ROCKET_WIDTH 32 // 6 * 8
+// Size of Rocket
+#define ROCKET_WIDTH 32
 #define ROCKET_HEIGHT 65
 
-#define SPACE_SHIP_WIDTH 80  // 6 * 8
-#define SPACE_SHIP_HEIGHT 64 // 8 * 8
+// Size of Spaceship
+#define SPACE_SHIP_WIDTH 80
+#define SPACE_SHIP_HEIGHT 64
 
+//Bullet Constants
 #define BULLET_SPEED 8
 #define MAX_BULLETS 30
+#define BULLET_MOVE_DELAY 2
 
+//Rocket Constants
 #define ROCKET_SPEED 8
 #define MAX_ROCKETS 6
 #define ROCKET_MOVE_DELAY 20
-#define BULLET_MOVE_DELAY 2
 
 #define RAND_MAX 112 // 944 / 8 test
 typedef struct
@@ -55,7 +60,8 @@ int score = 0;
 char score_str[3];   // maximum number of digits is 3
 char bullets_str[2]; // maximum number of digits is 2
 
-void clear_screen()
+//Clears all screen
+void clearScreen()
 {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color to black (RGBA)
     glClear(GL_COLOR_BUFFER_BIT);         // Clear the color buffer
@@ -63,13 +69,7 @@ void clear_screen()
     glFlush(); // Flush OpenGL pipeline to display the result
 }
 
-// void glClearRect(int x, int y, int x1, int x2)
-// {
-//     // SDL_SetRenderDrawColor( 0, 0, 0, 255); // Black color
-//     // SDL_Rect clearRect = {x, y, x1, x2};
-//     // SDL_RenderFillRect();
-// }
-
+//Clears specific rectangle from screen
 void glClearRect(int x, int y, int width, int height)
 {
     glScissor(x, y, width, height); // Enable scissor test to restrict clearing to the specified rectangle
@@ -81,6 +81,7 @@ void glClearRect(int x, int y, int width, int height)
     glDisable(GL_SCISSOR_TEST); // Disable scissor test after clearing
 }
 
+//Draw Boundaries
 void drawBoundaries()
 {
     // Draw top border
@@ -128,7 +129,7 @@ void drawBoundaries()
 }
 
 // Function to convert an integer to its string representation
-int int_to_string(int num, char *buffer)
+int intToString(int num, char *buffer)
 {
     int i = 0;
     int digits = 0; // Variable to store the number of digits
@@ -173,32 +174,8 @@ int int_to_string(int num, char *buffer)
     return digits; // Return the number of digits
 }
 
-// void graphics_write_string( int x, int y, const char *text)
-// {
-//     SDL_Color textColor = {255, 255, 255}; // White color
-//     SDL_Surface *surface = TTF_RenderText_Solid(font, text, textColor);
-//     if (surface == NULL)
-//     {
-//         printf("Failed to render text! SDL_ttf Error: %s\n", TTF_GetError());
-//         return;
-//     }
-
-//     SDL_Texture *texture = SDL_CreateTextureFromSurface( surface);
-//     if (texture == NULL)
-//     {
-//         printf("Failed to create texture! SDL_Error: %s\n", SDL_GetError());
-//         SDL_FreeSurface(surface);
-//         return;
-//     }
-
-//     SDL_Rect dstRect = {x, y, surface->w, surface->h}; // Position and size
-//     SDL_RenderCopy( texture, NULL, &dstRect);
-
-//     SDL_DestroyTexture(texture);
-//     SDL_FreeSurface(surface);
-// }
-
-void graphics_write_string(float x, float y, const char *string)
+//Write string on Screen
+void graphicsWriteString(float x, float y, const char *string)
 {
     glRasterPos2f(x, y); // Set the position for the text
     for (const char *c = string; *c != '\0'; ++c)
@@ -208,14 +185,16 @@ void graphics_write_string(float x, float y, const char *string)
     glFlush();
 }
 
+//Print Score on Screen
 void printScore(int x, int y)
 {
     glClearRect(x - 2, y, 27, 15);
-    int num_digits = int_to_string(score, score_str);
-    graphics_write_string(x, y, score_str);
+    int num_digits = intToString(score, score_str);
+    graphicsWriteString(x, y, score_str);
 }
 
-void bullet_counter()
+//Count how many bullet left
+void bulletCounter()
 {
     bullet_count = 0;
     for (int i = 0; i < MAX_BULLETS; i++)
@@ -227,49 +206,52 @@ void bullet_counter()
     }
 }
 
+//Print how many bullets left
 void printBulletCount(int x, int y)
 {
 
     glClearRect(x - 2, y, 27, 15);
     // SDL_SetRenderDrawColor( 255, 255, 255, 255); // White color
-    int num_digits = int_to_string(bullet_count, bullets_str);
-    graphics_write_string(x, y, bullets_str);
+    int num_digits = intToString(bullet_count, bullets_str);
+    graphicsWriteString(x, y, bullets_str);
     if (bullet_count < 10)
-        graphics_write_string(x + 8, y, " ");
+        graphicsWriteString(x + 8, y, " ");
 }
 
+//Write Game Info
 void info()
 {
     // SDL_SetRenderDrawColor( 255, 255, 255, 255); // Set color to draw (white)
-    graphics_write_string(16, 740, "Welcome!");
-    graphics_write_string(16, 720, "Save the World!");
-    graphics_write_string(16, 700, "by Eren Karadeniz");
-    graphics_write_string(16, 680, "200101070");
+    graphicsWriteString(16, 740, "Welcome!");
+    graphicsWriteString(16, 720, "Save the World!");
+    graphicsWriteString(16, 700, "by Eren Karadeniz");
+    graphicsWriteString(16, 680, "200101070");
 
-    graphics_write_string(16, 640, "Keys");
-    graphics_write_string(16, 620, "A to move left");
-    graphics_write_string(16, 600, "D to move right");
-    graphics_write_string(16, 580, "Space to Shot");
-    graphics_write_string(16, 560, "Q to quit game");
-    graphics_write_string(16, 540, "R to restart game");
-    graphics_write_string(16, 520, "P to pause game");
-    graphics_write_string(16, 500, "Win after reach");
-    graphics_write_string(16, 480, "25 Score");
+    graphicsWriteString(16, 640, "Keys");
+    graphicsWriteString(16, 620, "A to move left");
+    graphicsWriteString(16, 600, "D to move right");
+    graphicsWriteString(16, 580, "Space to Shot");
+    graphicsWriteString(16, 560, "Q to quit game");
+    graphicsWriteString(16, 540, "R to restart game");
+    graphicsWriteString(16, 520, "P to pause game");
+    graphicsWriteString(16, 500, "Win after reach");
+    graphicsWriteString(16, 480, "25 Score");
 }
 
+// Initialize game screen
 void intro()
 {
     drawBoundaries();
     info();
-    graphics_write_string(16, 450, "Bullets:");
+    graphicsWriteString(16, 450, "Bullets:");
     printBulletCount(88, 450);
 
-    graphics_write_string(16, 430, "Score:");
+    graphicsWriteString(16, 430, "Score:");
     printScore(80, 430);
 }
 
-// Draw A
-void draw_a(int x, int y, int w, int h)
+// Draw A shape for spaceship Draw
+void drawA(int x, int y, int w, int h)
 {
     glBegin(GL_LINES);
     // Draw the two diagonal lines of the 'A'
@@ -292,6 +274,7 @@ void draw_a(int x, int y, int w, int h)
     glEnd();
 }
 
+//Draw Circle
 void drawCircle(int x, int y, int r)
 {
     glBegin(GL_LINE_LOOP); // Use GL_LINE_LOOP instead of GL_TRIANGLE_FAN
@@ -303,15 +286,16 @@ void drawCircle(int x, int y, int r)
     glEnd();
 }
 
+//Draws Spaceship
 void drawSpaceship(int x, int y, int w, int h)
 {
     glColor3f(1.0f, 1.0f, 1.0f); // Set color to white
 
     // // Draw 'A' four times
-    draw_a(x, y + 5, w, h);
-    draw_a(x + 70, y + 5, w, h);
-    draw_a(x, y + 25, w, h);
-    draw_a(x + 70, y + 25, w, h);
+    drawA(x, y + 5, w, h);
+    drawA(x + 70, y + 5, w, h);
+    drawA(x, y + 25, w, h);
+    drawA(x + 70, y + 25, w, h);
 
     // Draw '-'
     glBegin(GL_LINES);
@@ -369,6 +353,7 @@ void drawSpaceship(int x, int y, int w, int h)
     glFlush();
 }
 
+// Clears the old position of the spaceship
 void clearSpaceship(int x, int y)
 {
     // Calculate bottom-right corner coordinates
@@ -377,7 +362,8 @@ void clearSpaceship(int x, int y)
     glClearRect(x - 12, y, x2, y2);
 }
 
-void drawCharacter(int x, int y)
+//Draw bullet
+void drawBullet(int x, int y)
 {
     // Set color to draw (white)
     glColor3f(1.0f, 1.0f, 1.0f);
@@ -394,6 +380,7 @@ void drawCharacter(int x, int y)
     glEnd();
 }
 
+//Move bullet
 void moveBullet(int index)
 {
     if (bulletMoveCounter % BULLET_MOVE_DELAY == 0)
@@ -407,14 +394,15 @@ void moveBullet(int index)
             bullets[index].y += BULLET_SPEED; // Move the bullet upwards
             // Draw '^' character at the new position
             // SDL_SetRenderDrawColor( 255, 255, 255, 255);        // Set color to draw (white)
-            drawCharacter(bullets[index].x, bullets[index].y); // Draw the bullet
+            drawBullet(bullets[index].x, bullets[index].y); // Draw the bullet
         }
         else
             bullets[index].active = 0;
     }
 }
 
-void move_bullets()
+//Control movement of all bullets
+void moveBullets()
 {
     // Move all active bullets
     for (int index = 0; index < MAX_BULLETS; index++)
@@ -423,7 +411,7 @@ void move_bullets()
         {
             if (bullets[index].active && !bullets[index].avaible)
             {
-                drawCharacter(bullets[index].x, bullets[index].y); // Draw the bullet
+                drawBullet(bullets[index].x, bullets[index].y); // Draw the bullet
                 moveBullet(index);
             }
         }
@@ -437,7 +425,7 @@ void move_bullets()
         bulletMoveCounter = 0;
 }
 
-void shot_bullet(Bullet *bullet)
+void shotBullet(Bullet *bullet)
 {
     bullet->active = 1;
     bullet->avaible = 0;
@@ -445,6 +433,7 @@ void shot_bullet(Bullet *bullet)
     bullet->y = ship_y + 60;
 }
 
+//Draw Rocket
 void drawRocket(int x, int y)
 {
     // Draw \||/
@@ -490,6 +479,8 @@ void drawRocket(int x, int y)
     glVertex2f(x + 15, y - 30);
     glEnd();
 }
+
+//Clear Rocket
 void clearRocket(int x, int y)
 {
     // Calculate bottom-right corner coordinates
@@ -498,7 +489,8 @@ void clearRocket(int x, int y)
     glClearRect(x - 1, y - 30, x2, y2);
 }
 
-unsigned int get_system_timer_value()
+//Get System Timer for random
+unsigned int getSystemTimerValue()
 {
     unsigned int val;
     // Read the value of the system timer (assuming x86 architecture)
@@ -506,17 +498,18 @@ unsigned int get_system_timer_value()
     return val;
 }
 
-// Define some global variables for the random number generator
+//Define some global variables for the random number generator
 static unsigned long next;
 
-// A function to generate a pseudo-random integer
+//Generate a pseudo-random integer
 int rand(void)
 {
-    next = get_system_timer_value();
+    next = getSystemTimerValue();
     next = next * 1103515245 + 12345;
     return (unsigned int)(next / 65536) % RAND_MAX;
 }
 
+//Generate a single rocket from passive rocket
 int randRocketAxis()
 {
     int min_x = SIDE_BAR_WIDTH / 8 + 1;
@@ -529,7 +522,7 @@ int randRocketAxis()
     return x + 8;
 }
 
-// Function to generate a single rocket from passive rocket
+//Generate a single rocket from passive rocket
 void generateRocket(Rocket *rocket)
 {
     int newRocketX, newRocketY;
@@ -560,7 +553,8 @@ void generateRocket(Rocket *rocket)
     rocket->active = 1;
 }
 
-void generate_rockets()
+//Generate Rockets
+void generateRockets()
 {
     // Generate new rockets if there are inactive rockets
     for (int i = 0; i < MAX_ROCKETS; i++)
@@ -572,6 +566,7 @@ void generate_rockets()
     }
 }
 
+//Control movement of single rocket
 void moveRocket(int index)
 {
     if (rocketMoveCounter % ROCKET_MOVE_DELAY == 0)
@@ -582,7 +577,8 @@ void moveRocket(int index)
     }
 }
 
-void move_rockets()
+//Control movement of rockets
+void moveRockets()
 {
     // Draw and move the rocket
     for (int i = 0; i < MAX_ROCKETS; i++)
@@ -604,10 +600,11 @@ void move_rockets()
         rocketMoveCounter = 0;
     if (current_key != 'p')
     {
-        generate_rockets();
+        generateRockets();
     }
 }
 
+//Init all bullets
 void initBullets()
 {
     for (int i = 0; i < MAX_BULLETS; i++)
@@ -619,6 +616,7 @@ void initBullets()
     }
 }
 
+//Init all rockets
 void initRockets()
 {
     for (int i = 0; i < MAX_ROCKETS; i++)
@@ -653,6 +651,7 @@ void initRockets()
     }
 }
 
+//Check for collision between bullet and rocket
 int collisionBullet()
 {
     for (int i = 0; i < MAX_BULLETS; i++)
@@ -681,12 +680,12 @@ int collisionBullet()
 
 void gameOver()
 {
-    clear_screen();
+    clearScreen();
     info();
     drawBoundaries();
-    graphics_write_string((MAX_X - SIDE_BAR_WIDTH) / 2 + 30, MAX_Y / 2 + 15, "You lost, Press R for Play Again");
-    graphics_write_string((MAX_X - SIDE_BAR_WIDTH) / 2 + 140, MAX_Y / 2 + 30, "Score: ");
-    graphics_write_string((MAX_X - SIDE_BAR_WIDTH) / 2 + 200, MAX_Y / 2 + 30, score_str);
+    graphicsWriteString((MAX_X - SIDE_BAR_WIDTH) / 2 + 30, MAX_Y / 2 + 15, "You lost, Press R for Play Again");
+    graphicsWriteString((MAX_X - SIDE_BAR_WIDTH) / 2 + 140, MAX_Y / 2 + 30, "Score: ");
+    graphicsWriteString((MAX_X - SIDE_BAR_WIDTH) / 2 + 200, MAX_Y / 2 + 30, score_str);
 }
 
 // Function to check for collision between rocket and spaceship
@@ -700,15 +699,16 @@ void collisionSpaceShip()
         {
             quit_flag = 1;
             gameOver();
-            graphics_write_string((MAX_X - SIDE_BAR_WIDTH) / 2 + 30, MAX_Y / 2, "Spaceship destroyed by rocket");
+            graphicsWriteString((MAX_X - SIDE_BAR_WIDTH) / 2 + 30, MAX_Y / 2, "Spaceship destroyed by rocket");
         }
     }
 }
 
+//Init Game
 void init()
 {
     // Set background color
-    clear_screen();
+    clearScreen();
     initBullets();
     initRockets();
     intro();
@@ -717,19 +717,22 @@ void init()
     ship_y = 15;                                                  // base y of spaceship 87th pixel
 }
 
+//Quit game when pressed quit
 void quitGame()
 {
-    clear_screen();
+    clearScreen();
     drawBoundaries();
     info();
-    graphics_write_string(MAX_X / 2, MAX_Y / 2, "Press R for Play Again");
+    graphicsWriteString(MAX_X / 2, MAX_Y / 2, "Press R for Play Again");
 }
 
+//Restart game when pressed restart
 void restartGame()
 {
     init(); // Initialize the game
 }
 
+//Handle how the program runs based on which key is pressed
 void handleUserInput(char current_key, Bullet bullets[MAX_BULLETS])
 {
     if (!pause_flag)
@@ -755,8 +758,8 @@ void handleUserInput(char current_key, Bullet bullets[MAX_BULLETS])
             {
                 if (!bullets[i].active && bullets[i].avaible)
                 {
-                    shot_bullet(&bullets[i]);
-                    bullet_counter();
+                    shotBullet(&bullets[i]);
+                    bulletCounter();
                     printBulletCount(88, 450);
                     break;
                 }
@@ -776,7 +779,7 @@ void handleUserInput(char current_key, Bullet bullets[MAX_BULLETS])
             pause_flag = !pause_flag; // Toggle pause_flag
             if (pause_flag)
             {
-                graphics_write_string(MAX_X / 2, MAX_Y / 2, "Paused, Press p to continue");
+                graphicsWriteString(MAX_X / 2, MAX_Y / 2, "Paused, Press p to continue");
             }
             break;
         }
@@ -793,15 +796,17 @@ void handleUserInput(char current_key, Bullet bullets[MAX_BULLETS])
     }
 }
 
+//Win condition
 void winGame()
 {
-    clear_screen();
+    clearScreen();
     info();
     drawBoundaries();
-    graphics_write_string(MAX_X / 2, MAX_Y / 2, "You Win!");
-    graphics_write_string(MAX_X / 2, MAX_Y / 2 + 15, "Press R for Play Again");
+    graphicsWriteString(MAX_X / 2, MAX_Y / 2, "You Win!");
+    graphicsWriteString(MAX_X / 2, MAX_Y / 2 + 15, "Press R for Play Again");
 }
 
+//Continue Game unless win or lose or pause
 int continueGame()
 {
     // Check if all rockets have reached the bottom of the screen
@@ -816,7 +821,7 @@ int continueGame()
             {
                 quit_flag = 1;
                 gameOver();
-                graphics_write_string((MAX_X - SIDE_BAR_WIDTH) / 2 + 30, MAX_Y / 2, "Rockets Reached Bottom.");
+                graphicsWriteString((MAX_X - SIDE_BAR_WIDTH) / 2 + 30, MAX_Y / 2, "Rockets Reached Bottom.");
                 return 0;
             }
         }
@@ -833,7 +838,8 @@ int continueGame()
     return 1;
 }
 
-void busy_wait(unsigned int milliseconds)
+// Define sleep
+void sleep(unsigned int milliseconds)
 {
     // Calculate the number of iterations needed for the desired milliseconds
     unsigned int iterations = milliseconds * 10000; // Adjust this value as needed based on your system's clock speed
@@ -864,6 +870,7 @@ void reshape(int width, int height)
     glLoadIdentity();                // Reset the modelview matrix
 }
 
+//keyboard get char
 char keyboard(unsigned char key, int x, int y)
 {
     current_key = key;
@@ -884,8 +891,8 @@ void gameLoop(int value)
         }
 
         // Move bullets and rockets
-        move_bullets();
-        move_rockets();
+        moveBullets();
+        moveRockets();
 
         // Check for collisions
         collisionBullet();
@@ -910,6 +917,7 @@ void gameLoop(int value)
     glutTimerFunc(25, gameLoop, 0);
 }
 
+//main function
 int main(int argc, char **argv)
 {
     glutInit(&argc, argv);                       // Initialize GLUT
